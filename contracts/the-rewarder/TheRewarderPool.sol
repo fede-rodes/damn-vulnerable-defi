@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./RewardToken.sol";
 import "../DamnValuableToken.sol";
 import "./AccountingToken.sol";
+import "hardhat/console.sol";
 
 /**
  * @title TheRewarderPool
@@ -27,7 +28,7 @@ contract TheRewarderPool {
     // Token used for internal accounting and snapshots
     // Pegged 1:1 with the liquidity token
     AccountingToken public accToken;
-    
+
     // Token in which rewards are issued
     RewardToken public immutable rewardToken;
 
@@ -48,7 +49,8 @@ contract TheRewarderPool {
      */
     function deposit(uint256 amountToDeposit) external {
         require(amountToDeposit > 0, "Must deposit tokens");
-        
+        console.log("New deposit", amountToDeposit);
+        console.log("sender", msg.sender);
         accToken.mint(msg.sender, amountToDeposit);
         distributeRewards();
 
@@ -58,17 +60,19 @@ contract TheRewarderPool {
     }
 
     function withdraw(uint256 amountToWithdraw) external {
+        console.log("New withdraw", amountToWithdraw);
         accToken.burn(msg.sender, amountToWithdraw);
         require(liquidityToken.transfer(msg.sender, amountToWithdraw));
     }
 
     function distributeRewards() public returns (uint256) {
+        console.log("Distribute rewards, roundNumber", roundNumber);
         uint256 rewards = 0;
 
         if(isNewRewardsRound()) {
             _recordSnapshot();
-        }        
-        
+        }
+
         uint256 totalDeposits = accToken.totalSupplyAt(lastSnapshotIdForRewards);
         uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards);
 
@@ -80,11 +84,15 @@ contract TheRewarderPool {
                 lastRewardTimestamps[msg.sender] = block.timestamp;
             }
         }
+        console.log("---------------");
+        console.log("Rewards", rewards);
+        console.log("msg.sender", msg.sender);
 
-        return rewards;     
+        return rewards;
     }
 
     function _recordSnapshot() private {
+        console.log("Record snapshot");
         lastSnapshotIdForRewards = accToken.snapshot();
         lastRecordedSnapshotTimestamp = block.timestamp;
         roundNumber++;
